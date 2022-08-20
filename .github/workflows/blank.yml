@@ -34,5 +34,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           mkdir $GITHUB_WORKSPACE/homedir
+          mkdir $GITHUB_WORKSPACE/auxfiles
           sudo bash ./rploader.sh ext geminilake-7.1.1-42951 add https://raw.githubusercontent.com/pocopico/rp-ext/main/e1000e/rpext-index.json
           sudo bash ./rploader.sh build geminilake-7.1.1-42951
