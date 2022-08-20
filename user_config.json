@@ -15,5 +15,10 @@
 	      "support_disk_compatibility" : "no",
           "support_memory_compatibility" : "no"
 
+},
+  "ramdisk_copy": {
+
+
+}
 
 }
