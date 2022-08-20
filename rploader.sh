@@ -287,8 +287,8 @@ function restoresession() {
 function downloadextractor() {
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/${workdir}/auxfiles"
-    temp_folder="/tmp/synoesp"
+    local_cache="${workdir}/auxfiles"
+    temp_folder="${workdir}/synoesp"
 
     if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
 
