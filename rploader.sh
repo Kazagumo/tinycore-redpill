@@ -7,7 +7,8 @@
 #
 # User Variables :
 
-homedir="/home/runner/work/tinycore-redpill/tinycore-redpill/homedir"
+workdir="/home/runner/work/tinycore-redpill/tinycore-redpill"
+homedir="$workdir/homedir"
 rploaderver="0.9.1.2"
 build="develop"
 rploaderfile="https://raw.githubusercontent.com/pocopico/tinycore-redpill/$build/rploader.sh"
@@ -2113,7 +2114,7 @@ function buildloader() {
     cd $homedir
 
     echo -n "Checking user_config.json : "
-    if jq -s . user_config.json >/dev/null; then
+    if jq -s . $workdir/user_config.json >/dev/null; then
         echo "Done"
     else
         echo "Error : Problem found in user_config.json"
