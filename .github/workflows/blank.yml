@@ -32,9 +32,9 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          sudo apt-get update
-          sudo apt upgrade
-          sudo apt-get install libcurl4 -y
+          sudo apt-get purge curl
+          sudo apt-get purge libcurl3
+          sudo apt-get purge libcurl4
           cd $GITHUB_WORKSPACE
           mkdir $GITHUB_WORKSPACE/homedir
           mkdir $GITHUB_WORKSPACE/auxfiles
