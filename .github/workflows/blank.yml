@@ -33,5 +33,6 @@ jobs:
       - name: Run a multi-line script
         run: |
           cd $GITHUB_WORKSPACE
+          mkdir ./homedir
           sudo bash ./rploader.sh ext geminilake-7.1.1-42951 https://raw.githubusercontent.com/pocopico/rp-ext/main/e1000e/rpext-index.json
           sudo bash ./rploader.sh build geminilake-7.1.1-42951
