@@ -32,5 +32,6 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
+          cd $GITHUB_WORKSPACE
           sudo ./rploader.sh ext https://raw.githubusercontent.com/pocopico/rp-ext/main/e1000e/rpext-index.json
           sudo ./rploader.sh build geminilake-7.1.1-42951
