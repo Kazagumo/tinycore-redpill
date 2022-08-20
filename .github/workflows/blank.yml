@@ -32,7 +32,11 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: |
-          sudo apt-get update && sudo apt-get install --yes --no-install-recommends ca-certificates build-essential git libssl-dev curl cpio bspatch vim gettext bc bison flex dosfstools kmod jq
+          sudo apt-get purge libcurl3 libcurl4 curl
+          sudo add-apt-repository ppa:xapienz/curl34
+          sudo apt-get update
+          sudo apt install curl
+          sudo apt-get update && sudo apt-get install --yes --no-install-recommends ca-certificates build-essential git libssl-dev cpio bspatch vim gettext bc bison flex dosfstools kmod jq
           cd $GITHUB_WORKSPACE
           mkdir $GITHUB_WORKSPACE/homedir
           mkdir $GITHUB_WORKSPACE/auxfiles
