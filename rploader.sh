@@ -7,6 +7,7 @@
 #
 # User Variables :
 
+homedir="./homedir"
 rploaderver="0.9.1.2"
 build="develop"
 rploaderfile="https://raw.githubusercontent.com/pocopico/tinycore-redpill/$build/rploader.sh"
@@ -26,7 +27,7 @@ fullupdatefiles="custom_config.json custom_config_jun.json global_config.json mo
 # END Do not modify after this line
 ######################################################################################################
 
-# extract nano  LD_LIBRARY_PATH=/home/tc/archive/lib /home/tc/archive/synoarchive.nano -xvf ../synology_geminilake_dva1622.pat
+# extract nano  LD_LIBRARY_PATH=$homedir/archive/lib $homedir/archive/synoarchive.nano -xvf ../synology_geminilake_dva1622.pat
 
 function history() {
 
@@ -242,13 +243,13 @@ function savesession() {
 
     echo -n "Saving current extensions "
 
-    cat /home/tc/redpill-load/custom/extensions/*/*json | jq '.url' >${lastsessiondir}/extensions.list
+    cat $homedir/redpill-load/custom/extensions/*/*json | jq '.url' >${lastsessiondir}/extensions.list
 
     [ -f ${lastsessiondir}/extensions.list ] && echo " -> OK !"
 
     echo -n "Saving current user_config.json "
 
-    cp /home/tc/user_config.json ${lastsessiondir}/user_config.json
+    cp $homedir/user_config.json ${lastsessiondir}/user_config.json
 
     [ -f ${lastsessiondir}/user_config.json ] && echo " -> OK !"
 
@@ -268,12 +269,12 @@ function restoresession() {
             if [ -d $lastsessiondir ] && [ -f ${lastsessiondir}/extensions.list ]; then
                 for extension in $(cat ${lastsessiondir}/extensions.list); do
                     echo "Adding extension ${extension} "
-                    cd /home/tc/redpill-load/ && ./ext-manager.sh add "$(echo $extension | sed -s 's/"//g' | sed -s 's/,//g')"
+                    cd $homedir/redpill-load/ && ./ext-manager.sh add "$(echo $extension | sed -s 's/"//g' | sed -s 's/,//g')"
                 done
             fi
             if [ -d $lastsessiondir ] && [ -f ${lastsessiondir}/user_config.json ]; then
                 echo "Copying last user_config.json"
-                cp ${lastsessiondir}/user_config.json /home/tc
+                cp ${lastsessiondir}/user_config.json $homedir
             fi
 
         fi
@@ -312,21 +313,21 @@ function downloadextractor() {
         echo "------------------------------------------------------------------"
         echo "Checking tinycore cache folder"
 
-        [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+        [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h $homedir/custom-module ] && sudo ln -s $local_cache $homedir/custom-module
 
         echo "Creating temp folder /tmp/synoesp"
 
         mkdir ${temp_folder}
 
-        if [ -d /home/tc/custom-module ] && [ -f /home/tc/custom-module/*42218*.pat ]; then
+        if [ -d $homedir/custom-module ] && [ -f $homedir/custom-module/*42218*.pat ]; then
 
-            patfile=$(ls /home/tc/custom-module/*42218*.pat | head -1)
+            patfile=$(ls $homedir/custom-module/*42218*.pat | head -1)
             echo "Found custom pat file ${patfile}"
             echo "Processing old pat file to extract required files for extraction"
             tar -C${temp_folder} -xf /${patfile} rd.gz
         else
-            curl --location https://global.download.synology.com/download/DSM/release/7.0.1/42218/DSM_DS3622xs%2B_42218.pat --output /home/tc/oldpat.tar.gz
-            [ -f /home/tc/oldpat.tar.gz ] && tar -C${temp_folder} -xf /home/tc/oldpat.tar.gz rd.gz
+            curl --location https://global.download.synology.com/download/DSM/release/7.0.1/42218/DSM_DS3622xs%2B_42218.pat --output $homedir/oldpat.tar.gz
+            [ -f $homedir/oldpat.tar.gz ] && tar -C${temp_folder} -xf $homedir/oldpat.tar.gz rd.gz
         fi
 
         echo "Entering synoesp"
@@ -397,32 +398,32 @@ function processpat() {
     fi
 
     echo "Checking for cached pat file"
-    [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+    [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -h $homedir/custom-module ] && sudo ln -s $local_cache $homedir/custom-module
 
     if [ -d ${local_cache} ] && [ -f ${local_cache}/*${SYNOMODEL}*.pat ] || [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ]; then
 
-        [ -f /home/tc/custom-module/*${SYNOMODEL}*.pat ] && patfile=$(ls /home/tc/custom-module/*${SYNOMODEL}*.pat | head -1)
-        [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ] && patfile=$(ls /home/tc/custom-module/*${MODEL}*${TARGET_REVISION}*.pat | head -1)
+        [ -f $homedir/custom-module/*${SYNOMODEL}*.pat ] && patfile=$(ls $homedir/custom-module/*${SYNOMODEL}*.pat | head -1)
+        [ -f ${local_cache}/*${MODEL}*${TARGET_REVISION}*.pat ] && patfile=$(ls $homedir/custom-module/*${MODEL}*${TARGET_REVISION}*.pat | head -1)
 
         echo "Found locally cached pat file ${patfile}"
 
         testarchive "${patfile}"
         if [ ${isencrypted} = "no" ]; then
             echo "File ${patfile} is already unencrypted"
-            echo "Copying file to /home/tc/redpill-load/cache folder"
-            cp ${patfile} /home/tc/redpill-load/cache/
+            echo "Copying file to $homedir/redpill-load/cache folder"
+            cp ${patfile} $homedir/redpill-load/cache/
         elif [ ${isencrypted} = "yes" ]; then
-            [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && testarchive /home/tc/redpill-load/cache/${SYNOMODEL}.pat
-            if [ -f /home/tc/redpill-load/cache/${SYNOMODEL}.pat ] && [ ${isencrypted} = "no" ]; then
-                echo "Unecrypted file is already cached in :  /home/tc/redpill-load/cache/${SYNOMODEL}.pat"
-                patfile="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+            [ -f $homedir/redpill-load/cache/${SYNOMODEL}.pat ] && testarchive $homedir/redpill-load/cache/${SYNOMODEL}.pat
+            if [ -f $homedir/redpill-load/cache/${SYNOMODEL}.pat ] && [ ${isencrypted} = "no" ]; then
+                echo "Unecrypted file is already cached in :  $homedir/redpill-load/cache/${SYNOMODEL}.pat"
+                patfile="$homedir/redpill-load/cache/${SYNOMODEL}.pat"
             else
                 echo "Extracting encrypted pat file : ${patfile} to ${temp_pat_folder}"
                 sudo /bin/syno_extract_system_patch ${patfile} ${temp_pat_folder} || echo "extract latest pat"
-                echo "Creating unecrypted pat file ${SYNOMODEL}.pat to /home/tc/redpill-load/cache folder "
-                mkdir -p /home/tc/redpill-load/cache/
-                cd ${temp_pat_folder} && tar -czf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./
-                patfile="/home/tc/redpill-load/cache/${SYNOMODEL}.pat"
+                echo "Creating unecrypted pat file ${SYNOMODEL}.pat to $homedir/redpill-load/cache folder "
+                mkdir -p $homedir/redpill-load/cache/
+                cd ${temp_pat_folder} && tar -czf $homedir/redpill-load/cache/${SYNOMODEL}.pat ./
+                patfile="$homedir/redpill-load/cache/${SYNOMODEL}.pat"
 
             fi
 
@@ -432,14 +433,14 @@ function processpat() {
             exit 99
         fi
 
-        tar xvf /home/tc/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && rm ./VERSION
+        tar xvf $homedir/redpill-load/cache/${SYNOMODEL}.pat ./VERSION && . ./VERSION && rm ./VERSION
         os_sha256=$(sha256sum ${patfile} | awk '{print $1}')
         echo "Pat file  sha256sum is : $os_sha256"
 
         echo -n "Checking config file existence -> "
-        if [ -f "/home/tc/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json" ]; then
+        if [ -f "$homedir/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json" ]; then
             echo "OK"
-            configfile="/home/tc/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json"
+            configfile="$homedir/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json"
         else
             echo "No config file found, please use the proper repo, clean and download again"
             exit 99
@@ -465,7 +466,7 @@ function processpat() {
     else
 
         echo "Could not find pat file locally cached"
-        configdir="/home/tc/redpill-load/config/${MODEL}/${TARGET_VERSION}-${TARGET_REVISION}"
+        configdir="$homedir/redpill-load/config/${MODEL}/${TARGET_VERSION}-${TARGET_REVISION}"
         configfile="${configdir}/config.json"
         pat_url=$(cat ${configfile} | jq '.os .pat_url' | sed -s 's/"//g')
         echo -e "Configdir : $configdir \nConfigfile: $configfile \nPat URL : $pat_url"
@@ -532,11 +533,11 @@ function addrequiredexts() {
 
     for extension in ${EXTENSIONS_SOURCE_URL}; do
         echo "Adding extension ${extension} "
-        cd /home/tc/redpill-load/ && ./ext-manager.sh add "$(echo $extension | sed -s 's/"//g' | sed -s 's/,//g')"
+        cd $homedir/redpill-load/ && ./ext-manager.sh add "$(echo $extension | sed -s 's/"//g' | sed -s 's/,//g')"
     done
     for extension in ${EXTENSIONS}; do
         echo "Updating extension : ${extension} contents for model : ${SYNOMODEL}  "
-        cd /home/tc/redpill-load/ && ./ext-manager.sh _update_platform_exts ${SYNOMODEL} ${extension}
+        cd $homedir/redpill-load/ && ./ext-manager.sh _update_platform_exts ${SYNOMODEL} ${extension}
     done
 
     if [ ${TARGET_PLATFORM} = "geminilake" ] || [ ${TARGET_PLATFORM} = "v1000" ] || [ ${TARGET_PLATFORM} = "dva1622" ]; then
@@ -555,7 +556,7 @@ function installapache() {
     tce-load -iw php-8.0-mod.tcz
     tce-load -iw libnghttp2.tcz
     #cd /usr/local/
-    #sudo tar xvf /home/tc/tcrphtml/tc.apache.tar.gz etc/httpd/
+    #sudo tar xvf $homedir/tcrphtml/tc.apache.tar.gz etc/httpd/
     #apachectl start
 
 }
@@ -564,14 +565,14 @@ function postupdate() {
 
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
 
-    cd /home/tc
+    cd $homedir
 
-    echo "Creating temp ramdisk space" && mkdir /home/tc/ramdisk
+    echo "Creating temp ramdisk space" && mkdir $homedir/ramdisk
 
     echo "Mounting partition ${loaderdisk}1" && sudo mount /dev/${loaderdisk}1
     echo "Mounting partition ${loaderdisk}2" && sudo mount /dev/${loaderdisk}2
 
-    cd /home/tc/ramdisk
+    cd $homedir/ramdisk
 
     echo "Extracting update ramdisk"
 
@@ -628,8 +629,8 @@ function postupdatev1() {
 
     echo "Mounting root to get the latest dsmroot patch in /.syno/patch "
 
-    if [ ! -f /home/tc/redpill-load/user_config.json ]; then
-        [ ! -h /home/tc/redpill-load/user_config.json ] && ln -s /home/tc/user_config.json /home/tc/redpill-load/user_config.json
+    if [ ! -f $homedir/redpill-load/user_config.json ]; then
+        [ ! -h $homedir/redpill-load/user_config.json ] && ln -s $homedir/user_config.json $homedir/redpill-load/user_config.json
     fi
 
     if [ $(mount | grep -i dsmroot | wc -l) -le 0 ]; then
@@ -678,20 +679,20 @@ function postupdatev1() {
     if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
         patfile="$(echo ${MODEL}_${buildnumber} | sed -e 's/\+/p/' | tr '[:upper:]' '[:lower:]').pat"
         echo "Creating pat file ${patfile} using contents of : $(pwd) "
-        [ ! -d "/home/tc/redpill-load/cache" ] && mkdir /home/tc/redpill-load/cache/
-        tar cfz /home/tc/redpill-load/cache/${patfile} *
-        os_sha256=$(sha256sum /home/tc/redpill-load/cache/${patfile} | awk '{print $1}')
+        [ ! -d "$homedir/redpill-load/cache" ] && mkdir $homedir/redpill-load/cache/
+        tar cfz $homedir/redpill-load/cache/${patfile} *
+        os_sha256=$(sha256sum $homedir/redpill-load/cache/${patfile} | awk '{print $1}')
         echo "Created pat file with sha256sum : $os_sha256"
-        cd /home/tc
+        cd $homedir
     else
         echo "OK, see you later"
         return
     fi
 
     echo -n "Checking config file existence -> "
-    if [ -f "/home/tc/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json" ]; then
+    if [ -f "$homedir/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json" ]; then
         echo "OK"
-        configfile="/home/tc/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json"
+        configfile="$homedir/redpill-load/config/$MODEL/${major}.${minor}.${micro}-${buildnumber}/config.json"
     else
         echo "No config file found, please use the proper repo, clean and download again"
         exit 99
@@ -711,7 +712,7 @@ function postupdatev1() {
 
     removebundledexts
 
-    cd /home/tc/redpill-load/
+    cd $homedir/redpill-load/
 
     addrequiredexts
 
@@ -720,7 +721,7 @@ function postupdatev1() {
     sudo ./build-loader.sh ${MODEL} ${major}.${minor}.${micro}-${buildnumber}
 
     loadername="redpill-${MODEL}_${major}.${minor}.${micro}-${buildnumber}"
-    loaderimg=$(ls -ltr /home/tc/redpill-load/images/${loadername}* | tail -1 | awk '{print $9}')
+    loaderimg=$(ls -ltr $homedir/redpill-load/images/${loadername}* | tail -1 | awk '{print $9}')
 
     echo "Moving loader ${loaderimg} to loader.img "
     if [ -f "${loaderimg}" ]; then
@@ -745,8 +746,8 @@ function postupdatev1() {
 
     echo -n "Mounting loop disks -> "
 
-    [ ! -d /home/tc/redpill-load/localdiskp1 ] && mkdir /home/tc/redpill-load/localdiskp1
-    [ ! -d /home/tc/redpill-load/localdiskp2 ] && mkdir /home/tc/redpill-load/localdiskp2
+    [ ! -d $homedir/redpill-load/localdiskp1 ] && mkdir $homedir/redpill-load/localdiskp1
+    [ ! -d $homedir/redpill-load/localdiskp2 ] && mkdir $homedir/redpill-load/localdiskp2
 
     [ ! -n "$(mount | grep -i localdiskp1)" ] && sudo mount ${loopdev}p1 localdiskp1
     [ ! -n "$(mount | grep -i localdiskp2)" ] && sudo mount ${loopdev}p2 localdiskp2
@@ -763,16 +764,16 @@ function postupdatev1() {
 
     echo -n "Copying loader files -> "
     echo -n "rd.gz : "
-    cp -f /home/tc/redpill-load/localdiskp1/rd.gz /mnt/${loaderdisk}1/rd.gz
-    cp -f /home/tc/redpill-load/localdiskp2/rd.gz /mnt/${loaderdisk}2/rd.gz
-    [ "$(sha256sum /home/tc/redpill-load/localdiskp1/rd.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/rd.gz | awk '{print $1}')" ] && [ "$(sha256sum /home/tc/redpill-load/localdiskp2/rd.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')" ] && echo -n "OK !!!"
+    cp -f $homedir/redpill-load/localdiskp1/rd.gz /mnt/${loaderdisk}1/rd.gz
+    cp -f $homedir/redpill-load/localdiskp2/rd.gz /mnt/${loaderdisk}2/rd.gz
+    [ "$(sha256sum $homedir/redpill-load/localdiskp1/rd.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/rd.gz | awk '{print $1}')" ] && [ "$(sha256sum $homedir/redpill-load/localdiskp2/rd.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}2/rd.gz | awk '{print $1}')" ] && echo -n "OK !!!"
     echo -n " zImage : "
-    cp -f /home/tc/redpill-load/localdiskp1/zImage /mnt/${loaderdisk}1/zImage
-    cp -f /home/tc/redpill-load/localdiskp2/zImage /mnt/${loaderdisk}2/zImage
-    [ "$(sha256sum /home/tc/redpill-load/localdiskp1/zImage | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/zImage | awk '{print $1}')" ] && [ "$(sha256sum /home/tc/redpill-load/localdiskp2/zImage | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')" ] && echo -n "OK !!!"
+    cp -f $homedir/redpill-load/localdiskp1/zImage /mnt/${loaderdisk}1/zImage
+    cp -f $homedir/redpill-load/localdiskp2/zImage /mnt/${loaderdisk}2/zImage
+    [ "$(sha256sum $homedir/redpill-load/localdiskp1/zImage | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/zImage | awk '{print $1}')" ] && [ "$(sha256sum $homedir/redpill-load/localdiskp2/zImage | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}2/zImage | awk '{print $1}')" ] && echo -n "OK !!!"
     echo -n " grub.cfg : "
-    cp -f /home/tc/redpill-load/localdiskp1/boot/grub/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
-    [ "$(sha256sum /home/tc/redpill-load/localdiskp1/boot/grub/grub.cfg | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk '{print $1}')" ] && echo "OK !!!"
+    cp -f $homedir/redpill-load/localdiskp1/boot/grub/grub.cfg /mnt/${loaderdisk}1/boot/grub/grub.cfg
+    [ "$(sha256sum $homedir/redpill-load/localdiskp1/boot/grub/grub.cfg | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/boot/grub/grub.cfg | awk '{print $1}')" ] && echo "OK !!!"
     echo "Creating tinycore entry"
     tinyentry | sudo tee --append /mnt/${loaderdisk}1/boot/grub/grub.cfg
 
@@ -781,8 +782,8 @@ function postupdatev1() {
 
     if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
         echo "Copying custom.gz"
-        cp -f /home/tc/redpill-load/localdiskp1/custom.gz /mnt/${loaderdisk}1/custom.gz
-        [ "$(sha256sum /home/tc/redpill-load/localdiskp1/custom.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/custom.gz | awk '{print $1}')" ] && echo "OK !!!"
+        cp -f $homedir/redpill-load/localdiskp1/custom.gz /mnt/${loaderdisk}1/custom.gz
+        [ "$(sha256sum $homedir/redpill-load/localdiskp1/custom.gz | awk '{print $1}')" == "$(sha256sum /mnt/${loaderdisk}1/custom.gz | awk '{print $1}')" ] && echo "OK !!!"
     else
         echo "OK, you should be fine keeping your existing custom.gz"
     fi
@@ -799,10 +800,10 @@ function postupdatev1() {
     sudo losetup -d ${loopdev}
     [ -z $(losetup | grep -i loader.img) ] && echo "OK !!!"
 
-    if [ -f /home/tc/redpill-load/loader.img ]; then
+    if [ -f $homedir/redpill-load/loader.img ]; then
         echo -n "Removing loader.img -> "
-        sudo rm -rf /home/tc/redpill-load/loader.img
-        [ ! -f /home/tc/redpill-load/loader.img ] && echo "OK !!!"
+        sudo rm -rf $homedir/redpill-load/loader.img
+        [ ! -f $homedir/redpill-load/loader.img ] && echo "OK !!!"
     fi
 
     echo "Unmounting dsmroot -> "
@@ -816,14 +817,14 @@ function postupdatev1() {
 function removebundledexts() {
 
     echo "Entering redpill-load directory"
-    cd /home/tc/redpill-load/
+    cd $homedir/redpill-load/
 
     echo "Removing bundled exts directories"
     for bundledext in $(grep ":" bundled-exts.json | awk '{print $2}' | sed -e 's/"//g' | sed -e 's/,/\n/g'); do
         bundledextdir=$(curl --location -s "$bundledext" | jq -r -e '.id')
-        if [ -d /home/tc/redpill-load/custom/extensions/${bundledextdir} ]; then
+        if [ -d $homedir/redpill-load/custom/extensions/${bundledextdir} ]; then
             echo "Removing : ${bundledextdir}"
-            sudo rm -rf /home/tc/redpill-load/custom/extensions/${bundledextdir}
+            sudo rm -rf $homedir/redpill-load/custom/extensions/${bundledextdir}
         fi
 
     done
@@ -835,9 +836,9 @@ function fullupgrade() {
     backupdate="$(date +%Y-%b-%d-%H-%M)"
 
     echo "Performing a full TCRP upgrade"
-    echo "Warning some of your local files will be moved to /home/tc/old/xxxx.${backupdate}"
+    echo "Warning some of your local files will be moved to $homedir/old/xxxx.${backupdate}"
 
-    [ ! -d /home/tc/old ] && mkdir /home/tc/old
+    [ ! -d $homedir/old ] && mkdir $homedir/old
 
     for updatefile in ${fullupdatefiles}; do
 
@@ -860,7 +861,7 @@ function backuploader() {
 
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    homesize=$(du -sh /home/tc | awk '{print $1}')
+    homesize=$(du -sh $homedir | awk '{print $1}')
     backupdate="$(date +%Y-%b-%d-%H-%M)"
 
     if [ ! -n "$loaderdisk" ] || [ ! -n "$tcrppart" ]; then
@@ -906,7 +907,7 @@ function restoreloader() {
 
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    homesize=$(du -sh /home/tc | awk '{print $1}')
+    homesize=$(du -sh $homedir | awk '{print $1}')
     PS3="Select backup folder to restore : "
     options=""
 
@@ -1077,23 +1078,23 @@ function patchdtc() {
     curl --location --progress-bar "$dtcbin" -O
     chmod 700 dtc
 
-    if [ -f /home/tc/custom-module/${dtbfile}.dts ] && [ ! -f /home/tc/custom-module/${dtbfile}.dtb ]; then
+    if [ -f $homedir/custom-module/${dtbfile}.dts ] && [ ! -f $homedir/custom-module/${dtbfile}.dtb ]; then
         echo "Found locally cached dts file ${dtbfile}.dts and dtb file does not exist in cache, converting dts to dtb"
-        ./dtc -q -I dts -O dtb /home/tc/custom-module/${dtbfile}.dts >/home/tc/custom-module/${dtbfile}.dtb
+        ./dtc -q -I dts -O dtb $homedir/custom-module/${dtbfile}.dts >$homedir/custom-module/${dtbfile}.dtb
     fi
 
-    if [ -f /home/tc/custom-module/${dtbfile}.dtb ]; then
+    if [ -f $homedir/custom-module/${dtbfile}.dtb ]; then
 
         echo "Fould locally cached dtb file"
         read -p "Should i use that file ? [Yy/Nn]" answer
         if [ -n "$answer" ] && [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
             echo "OK copying over the cached dtb file"
 
-            dtbextfile="$(find /home/tc/redpill-load/custom -name model_${dtbfile}.dtb)"
+            dtbextfile="$(find $homedir/redpill-load/custom -name model_${dtbfile}.dtb)"
             if [ ! -z ${dtbextfile} ] && [ -f ${dtbextfile} ]; then
                 echo -n "Copying patched dtb file ${dtbfile}.dtb to ${dtbextfile} -> "
-                sudo cp /home/tc/custom-module/${dtbfile}.dtb ${dtbextfile}
-                if [ $(sha256sum /home/tc/custom-module/${dtbfile}.dtb | awk '{print $1}') = $(sha256sum ${dtbextfile} | awk '{print $1}') ]; then
+                sudo cp $homedir/custom-module/${dtbfile}.dtb ${dtbextfile}
+                if [ $(sha256sum $homedir/custom-module/${dtbfile}.dtb | awk '{print $1}') = $(sha256sum ${dtbextfile} | awk '{print $1}') ]; then
                     echo -e "OK ! File copied and verified !"
                     return
                 else
@@ -1111,7 +1112,7 @@ function patchdtc() {
             echo "OK lets continue patching"
         fi
     else
-        echo "No cached dtb file found in /home/tc/custom-module/${dtbfile}.dtb"
+        echo "No cached dtb file found in $homedir/custom-module/${dtbfile}.dtb"
     fi
 
     if [ ! -f ${dtbfile}.dts ]; then
@@ -1186,7 +1187,7 @@ function patchdtc() {
     echo "Converting dts file : ${dtbfile}.dts to dtb file : >${dtbfile}.dtb "
     ./dtc -q -I dts -O dtb ${dtbfile}.dts >${dtbfile}.dtb
 
-    dtbextfile="$(find /home/tc/redpill-load/custom -name model_${dtbfile}.dtb)"
+    dtbextfile="$(find $homedir/redpill-load/custom -name model_${dtbfile}.dtb)"
     if [ ! -z ${dtbextfile} ] && [ -f ${dtbextfile} ]; then
         echo -n "Copying patched dtb file ${dtbfile}.dtb to ${dtbextfile} -> "
         sudo cp ${dtbfile}.dtb ${dtbextfile}
@@ -1224,12 +1225,12 @@ function mountshare() {
     echo "smb shared folder. Start always with /"
     read -r share
 
-    echo "local mount folder. Use foldername for the mount. This folder is created in /home/tc (default:/home/tc/mount)"
+    echo "local mount folder. Use foldername for the mount. This folder is created in $homedir (default:$homedir/mount)"
     read -r mountpoint
 
     if [ -z "$mountpoint" ]; then
-        echo "use /home/tc/mount folder, nothing was entered to use so we use the default folder"
-        mountpoint="/home/tc/mount"
+        echo "use $homedir/mount folder, nothing was entered to use so we use the default folder"
+        mountpoint="$homedir/mount"
 
         if [ ! -d "$mountpoint" ]; then
             sudo mkdir -p "$mountpoint"
@@ -1259,10 +1260,10 @@ function checkmachine() {
 function backup() {
 
     loaderdisk=$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
-    homesize=$(du -sh /home/tc | awk '{print $1}')
+    homesize=$(du -sh $homedir | awk '{print $1}')
 
     echo "Please make sure you are using the latest 1GB img before using backup option"
-    echo "Current /home/tc size is $homesize , try to keep it less than 1GB as it might not fit into your image"
+    echo "Current $homedir size is $homesize , try to keep it less than 1GB as it might not fit into your image"
 
     echo "Should i update the $loaderdisk with your current files [Yy/Nn]"
     read answer
@@ -1706,7 +1707,7 @@ function gettoolchain() {
         return
     fi
 
-    cd /home/tc
+    cd $homedir
 
     if [ -f dsm-toolchain.7.0.txz ]; then
         echo "File already cached"
@@ -1718,7 +1719,7 @@ function gettoolchain() {
     echo -n "Checking file -> "
     checkfilechecksum dsm-toolchain.7.0.txz ${TOOLKIT_SHA}
     echo "OK, file matches sha256sum, extracting"
-    cd / && sudo tar -xf /home/tc/dsm-toolchain.7.0.txz usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build
+    cd / && sudo tar -xf $homedir/dsm-toolchain.7.0.txz usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build
     if [ $? = 0 ]; then
         return
     else
@@ -1759,33 +1760,33 @@ function readConfig() {
 
 function getsynokernel() {
 
-    if [ -d /home/tc/linux-kernel ]; then
-        if [ -f /home/tc/linux-kernel/synoconfigs/${TARGET_PLATFORM} ]; then
+    if [ -d $homedir/linux-kernel ]; then
+        if [ -f $homedir/linux-kernel/synoconfigs/${TARGET_PLATFORM} ]; then
             echo "Synokernel already cached"
             return
         else
             echo "Synokernel is cached but does not match the required sources"
-            rm -rf /home/tc/linux-kernel
+            rm -rf $homedir/linux-kernel
             rm -rf synokernel.txz
         fi
     fi
 
-    cd /home/tc
+    cd $homedir
 
     if [ -f synokernel.txz ]; then
         echo -n "File already cached, checking file -> "
         checkfilechecksum synokernel.txz ${SYNOKERNEL_SHA}
         echo "OK, file matches sha256sum, extracting"
-        tar xf /home/tc/synokernel.txz
+        tar xf $homedir/synokernel.txz
         mv $(tar --exclude="*/*/*" -tf synokernel.txz | head -1) linux-kernel
         rm -rf synokernel.txz
     else
         echo "Downloading and caching synokernel"
-        cd /home/tc && curl --progress-bar --location ${SYNOKERNEL_URL} --output synokernel.txz
+        cd $homedir && curl --progress-bar --location ${SYNOKERNEL_URL} --output synokernel.txz
         checkfilechecksum synokernel.txz ${SYNOKERNEL_SHA}
         echo "OK, file matches sha256sum, extracting"
         echo "Extracting synokernel"
-        tar xf /home/tc/synokernel.txz
+        tar xf $homedir/synokernel.txz
         mv $(tar --exclude="*/*/*" -tf synokernel.txz | head -1) linux-kernel
         rm -rf synokernel.txz
     fi
@@ -1795,19 +1796,19 @@ function getsynokernel() {
 function cleanloader() {
 
     echo "Clearing local redpill files"
-    sudo rm -rf /home/tc/redpill*
-    sudo rm -rf /home/tc/*tgz
-    sudo rm -rf /home/tc/latestrploader.sh
+    sudo rm -rf $homedir/redpill*
+    sudo rm -rf $homedir/*tgz
+    sudo rm -rf $homedir/latestrploader.sh
 
 }
 
 function compileredpill() {
 
-    cd /home/tc
+    cd $homedir
 
     export DSM_VERSION=${TARGET_VERSION}
-    export REDPILL_LOAD_SRC=/home/tc/redpill-load
-    export REDPILL_LKM_SRC=/home/tc/redpill-lkm
+    export REDPILL_LOAD_SRC=$homedir/redpill-load
+    export REDPILL_LKM_SRC=$homedir/redpill-lkm
     export LOCAL_RP_LOAD_USE=false
     export ARCH=x86_64
     export LOCAL_RP_LKM_USE=false
@@ -1817,14 +1818,14 @@ function compileredpill() {
         export LINUX_SRC=/usr/local/x86_64-pc-linux-gnu/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-7.0/build
 
     else
-        export LINUX_SRC=/home/tc/linux-kernel
+        export LINUX_SRC=$homedir/linux-kernel
     fi
 
     cd redpill-lkm && make ${REDPILL_LKM_MAKE_TARGET}
-    strip --strip-debug /home/tc/redpill-lkm/redpill.ko
-    modinfo /home/tc/redpill-lkm/redpill.ko
+    strip --strip-debug $homedir/redpill-lkm/redpill.ko
+    modinfo $homedir/redpill-lkm/redpill.ko
     REDPILL_MOD_NAME="redpill-linux-v$(modinfo redpill.ko | grep vermagic | awk '{print $2}').ko"
-    cp /home/tc/redpill-lkm/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+    cp $homedir/redpill-lkm/redpill.ko $homedir/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
 
 }
 
@@ -1920,7 +1921,7 @@ mountshare, version, monitor, help
 
 - fullupgrade : 
   Performs a full upgrade of the local files to the latest available on the repo. It will
-  backup the current filed under /home/tc/old
+  backup the current filed under $homedir/old
   
 - listmods <platform>:
   Tries to figure out any required extensions. This usually are device modules
@@ -1936,13 +1937,13 @@ mountshare, version, monitor, help
   
 - patchdtc :       
   Tries to identify and patch your dtc model for your disk and nvme devices. If you want to have 
-  your manually edited dts file used convert it to dtb and place it under /home/tc/custom-modules
+  your manually edited dts file used convert it to dtb and place it under $homedir/custom-modules
   
 - satamap :
   Tries to identify your SataPortMap and DiskIdxMap values and updates the user_config.json file 
   
 - backup :
-  Backup and make changes /home/tc changed permanent to your loader disk. Next time you boot,
+  Backup and make changes $homedir changed permanent to your loader disk. Next time you boot,
   your /home will be restored to the current state.
   
 - backuploader :
@@ -2003,13 +2004,13 @@ function checkinternet() {
 
 function gitdownload() {
 
-    cd /home/tc
+    cd $homedir
 
     if [ -d redpill-lkm ]; then
         echo "Redpill sources already downloaded, pulling latest"
         cd redpill-lkm
         git pull
-        cd /home/tc
+        cd $homedir
     else
         git clone -b $LKM_BRANCH "$LKM_SOURCE_URL"
     fi
@@ -2018,7 +2019,7 @@ function gitdownload() {
         echo "Loader sources already downloaded, pulling latest"
         cd redpill-load
         git pull
-        cd /home/tc
+        cd $homedir
     else
         git clone -b $LD_BRANCH "$LD_SOURCE_URL"
     fi
@@ -2027,23 +2028,23 @@ function gitdownload() {
 
 function getstaticmodule() {
 
-    cd /home/tc
+    cd $homedir
 
-    if [ -d /home/tc/custom-module ] && [ -f /home/tc/custom-module/redpill.ko ]; then
+    if [ -d $homedir/custom-module ] && [ -f $homedir/custom-module/redpill.ko ]; then
         echo "Found custom redpill module, do you want to use this instead ? [yY/nN] : "
         read answer
 
         if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
-            REDPILL_MOD_NAME="redpill-linux-v$(modinfo /home/tc/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
-            cp /home/tc/custom-module/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
-            strip --strip-debug /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+            REDPILL_MOD_NAME="redpill-linux-v$(modinfo $homedir/custom-module/redpill.ko | grep vermagic | awk '{print $2}').ko"
+            cp $homedir/custom-module/redpill.ko $homedir/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+            strip --strip-debug $homedir/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
             return
         fi
 
     fi
 
     echo "Removing any old redpill.ko modules"
-    [ -f /home/tc/redpill.ko ] && rm -f /home/tc/redpill.ko
+    [ -f $homedir/redpill.ko ] && rm -f $homedir/redpill.ko
 
     extension=$(curl -s --location "$redpillextension")
 
@@ -2084,7 +2085,7 @@ function getstaticmodule() {
 
     if [ -f redpill.ko ] && [ -n $(strings redpill.ko | grep $SYNOMODEL) ]; then
         REDPILL_MOD_NAME="redpill-linux-v$(modinfo redpill.ko | grep vermagic | awk '{print $2}').ko"
-        mv /home/tc/redpill.ko /home/tc/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
+        mv $homedir/redpill.ko $homedir/redpill-load/ext/rp-lkm/${REDPILL_MOD_NAME}
     else
         echo "Module does not contain platorm information for ${SYNOMODEL}"
         exit 99
@@ -2094,9 +2095,9 @@ function getstaticmodule() {
 
 function downloadtools() {
 
-    curl -s --progress-bar --location "https://packages.slackonly.com/pub/packages/14.1-x86_64/development/bsdiff/bsdiff-4.3-x86_64-1_slack.txz" --output /home/tc/bsdiff.txz
-    [ ! -f /home/tc/bsdiff.txz ] && echo "bsdiff binary was not downloaded"
-    [ -f /home/tc/bsdiff.txz ] && cd / && sudo tar xf /home/tc/bsdiff.txz && rm -rf /home/tc/bsdiff.txz && cd /home/tc
+    curl -s --progress-bar --location "https://packages.slackonly.com/pub/packages/14.1-x86_64/development/bsdiff/bsdiff-4.3-x86_64-1_slack.txz" --output $homedir/bsdiff.txz
+    [ ! -f $homedir/bsdiff.txz ] && echo "bsdiff binary was not downloaded"
+    [ -f $homedir/bsdiff.txz ] && cd / && sudo tar xf $homedir/bsdiff.txz && rm -rf $homedir/bsdiff.txz && cd $homedir
 
 }
 
@@ -2107,9 +2108,9 @@ function buildloader() {
 
     [ "$1" == "junmod" ] && JUNLOADER="YES"
 
-    [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -d /home/tc/custom-module ] && ln -s $local_cache /home/tc/custom-module
+    [ -d $local_cache ] && echo "Found tinycore cache folder, linking to home/tc/custom-module" && [ ! -d $homedir/custom-module ] && ln -s $local_cache $homedir/custom-module
 
-    cd /home/tc
+    cd $homedir
 
     echo -n "Checking user_config.json : "
     if jq -s . user_config.json >/dev/null; then
@@ -2130,11 +2131,11 @@ function buildloader() {
         sudo ln -s /usr/local/lib/libbz2.so.1.0.8 /lib64/libbz2.so.1
     fi
 
-    if [ ! -f /home/tc/redpill-load/user_config.json ]; then
-        ln -s /home/tc/user_config.json /home/tc/redpill-load/user_config.json
+    if [ ! -f $homedir/redpill-load/user_config.json ]; then
+        ln -s $homedir/user_config.json $homedir/redpill-load/user_config.json
     fi
 
-    cd /home/tc/redpill-load
+    cd $homedir/redpill-load
 
     if [ -d cache ]; then
         echo "Cache directory OK "
@@ -2150,18 +2151,18 @@ function buildloader() {
 
     else
 
-        if [ -d /home/tc/custom-module ]; then
-            echo "Want to use firmware files from /home/tc/custom-module/*.pat ? [yY/nN] : "
+        if [ -d $homedir/custom-module ]; then
+            echo "Want to use firmware files from $homedir/custom-module/*.pat ? [yY/nN] : "
             read answer
 
             if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
-                sudo cp -adp /home/tc/custom-module/*${TARGET_REVISION}*.pat /home/tc/redpill-load/cache/
+                sudo cp -adp $homedir/custom-module/*${TARGET_REVISION}*.pat $homedir/redpill-load/cache/
             fi
         fi
 
     fi
 
-    [ -d /home/tc/redpill-load ] && cd /home/tc/redpill-load
+    [ -d $homedir/redpill-load ] && cd $homedir/redpill-load
 
     addrequiredexts
 
@@ -2250,13 +2251,13 @@ function buildloader() {
         read answer
         if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
             rm -f /mnt/${tcrppart}/auxfiles/*.pat
-            patfile=$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)
+            patfile=$(ls $homedir/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)
             echo "Found ${patfile}, copying to cache directory : ${local_cache} "
             cp -f ${patfile} ${local_cache}
         fi
     else
-        if [ -f "$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)" ]; then
-            patfile=$(ls /home/tc/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)
+        if [ -f "$(ls $homedir/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)" ]; then
+            patfile=$(ls $homedir/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)
             echo "Found ${patfile}, copying to cache directory : ${local_cache} "
             cp -f ${patfile} ${local_cache}
         fi
@@ -2268,7 +2269,7 @@ function kernelprepare() {
 
     export ARCH=x86_64
 
-    cd /home/tc/linux-kernel
+    cd $homedir/linux-kernel
     cp synoconfigs/${TARGET_PLATFORM} .config
     if [ ${TARGET_PLATFORM} = "apollolake" ]; then
         echo '+' >.scmversion
@@ -2322,20 +2323,20 @@ function getlatestrploader() {
         read confirmation
         if [ "$confirmation" = "y" ] || [ "$confirmation" = "Y" ]; then
             echo "OK, updating, please re-run after updating"
-            cp -f /home/tc/latestrploader.sh /home/tc/rploader.sh
-            rm -f /home/tc/latestrploader.sh
+            cp -f $homedir/latestrploader.sh $homedir/rploader.sh
+            rm -f $homedir/latestrploader.sh
             loaderdisk=$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)
             echo "Updating tinycore loader with latest updates"
             #cleanloader
             filetool.sh -b ${loaderdisk}3
             exit
         else
-            rm -f /home/tc/latestrploader.sh
+            rm -f $homedir/latestrploader.sh
             return
         fi
     else
         echo "Version is current"
-        rm -f /home/tc/latestrploader.sh
+        rm -f $homedir/latestrploader.sh
     fi
 
 }
@@ -2381,8 +2382,8 @@ function getvars() {
     fi
 
     [ ! -d ${local_cache} ] && sudo mkdir -p ${local_cache}
-    [ -h /home/tc/custom-module ] && unlink /home/tc/custom-module
-    [ ! -h /home/tc/custom-module ] && sudo ln -s $local_cache /home/tc/custom-module
+    [ -h $homedir/custom-module ] && unlink $homedir/custom-module
+    [ ! -h $homedir/custom-module ] && sudo ln -s $local_cache $homedir/custom-module
 
     if [ -z "$TARGET_PLATFORM" ] || [ -z "$TARGET_VERSION" ] || [ -z "$TARGET_REVISION" ]; then
         echo "Error : Platform not found "
@@ -2611,7 +2612,7 @@ function ext_manager() {
     local _ACTION="${1}"
     local _PLATFORM_VERSION="${2}"
     shift 2
-    local _REDPILL_LOAD_SRC="/home/tc/redpill-load"
+    local _REDPILL_LOAD_SRC="$homedir/redpill-load"
     export MRP_SRC_NAME="${_SCRIPTNAME} ${_ACTION} ${_PLATFORM_VERSION}"
     ${_REDPILL_LOAD_SRC}/ext-manager.sh $@
     exit $?
