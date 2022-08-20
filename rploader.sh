@@ -287,7 +287,7 @@ function restoresession() {
 function downloadextractor() {
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    local_cache="/${workdir}/auxfiles"
     temp_folder="/tmp/synoesp"
 
     if [ -d ${local_cache/extractor /} ] && [ -f ${local_cache}/extractor/scemd ]; then
@@ -295,11 +295,11 @@ function downloadextractor() {
         echo "Found extractor locally cached"
 
         echo "Copying required libraries to local lib directory"
-        sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
+        sudo cp /${workdir}/auxfiles/extractor/lib* /lib/
         echo "Linking lib to lib64"
         [ ! -h /lib64 ] && sudo ln -s /lib /lib64
         echo "Copying executable"
-        sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
+        sudo cp /${workdir}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
 
         echo "Removing temp folder /tmp/synoesp"
         rm -rf $temp_folder
@@ -339,23 +339,23 @@ function downloadextractor() {
         cpio -idm <rd 2>&1 || echo "extract rd"
         mkdir extract
 
-        mkdir /mnt/${tcrppart}/auxfiles && cd /mnt/${tcrppart}/auxfiles
+        mkdir /${workdir}/auxfiles && cd /${workdir}/auxfiles
 
         echo "Copying required files to local cache folder for future use"
 
-        mkdir /mnt/${tcrppart}/auxfiles/extractor
+        mkdir /${workdir}/auxfiles/extractor
 
         for file in usr/lib/libcurl.so.4 usr/lib/libmbedcrypto.so.5 usr/lib/libmbedtls.so.13 usr/lib/libmbedx509.so.1 usr/lib/libmsgpackc.so.2 usr/lib/libsodium.so usr/lib/libsynocodesign-ng-virtual-junior-wins.so.7 usr/syno/bin/scemd; do
-            echo "Copying $file to /mnt/${tcrppart}/auxfiles"
-            cp $file /mnt/${tcrppart}/auxfiles/extractor
+            echo "Copying $file to /${workdir}/auxfiles"
+            cp $file /${workdir}/auxfiles/extractor
         done
 
         echo "Copying required libraries to local lib directory"
-        sudo cp /mnt/${tcrppart}/auxfiles/extractor/lib* /lib/
+        sudo cp /${workdir}/auxfiles/extractor/lib* /lib/
         echo "Linking lib to lib64"
         [ ! -h /lib64 ] && sudo ln -s /lib /lib64
         echo "Copying executable"
-        sudo cp /mnt/${tcrppart}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
+        sudo cp /${workdir}/auxfiles/extractor/scemd /bin/syno_extract_system_patch
 
         echo "Removing temp folder /tmp/synoesp"
         rm -rf $temp_folder
@@ -372,7 +372,7 @@ function processpat() {
 
     loaderdisk="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    local_cache="/${workdir}/auxfiles"
     temp_pat_folder="/tmp/pat"
 
     if [ "${TARGET_PLATFORM}" = "apollolake" ]; then
@@ -2105,7 +2105,7 @@ function downloadtools() {
 function buildloader() {
 
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    local_cache="/${workdir}/auxfiles"
 
     [ "$1" == "junmod" ] && JUNLOADER="YES"
 
@@ -2247,11 +2247,11 @@ function buildloader() {
 
     if [ $(df -h /mnt/${tcrppart} | grep mnt | awk '{print $4}' | cut -c 1-3 | sed -e 's/M//g') -le 400 ]; then
         echo "No adequate space on TCRP loader partition /mnt/${tcrppart} to cache pat file"
-        echo "Found $(ls /mnt/${tcrppart}/auxfiles/*pat) file"
+        echo "Found $(ls /${workdir}/auxfiles/*pat) file"
         echo -n "Do you want me to remove older cached pat files and cache current ? [yY/nN] : "
         read answer
         if [ "$answer" == "y" ] || [ "$answer" == "Y" ]; then
-            rm -f /mnt/${tcrppart}/auxfiles/*.pat
+            rm -f /${workdir}/auxfiles/*.pat
             patfile=$(ls $homedir/redpill-load/cache/*${TARGET_REVISION}*.pat | head -1)
             echo "Found ${patfile}, copying to cache directory : ${local_cache} "
             cp -f ${patfile} ${local_cache}
@@ -2369,7 +2369,7 @@ function getvars() {
     TARGET_REVISION="$(echo $platform_selected | jq -r -e '.platform_version | split("-")' | jq -r -e .[2])"
     REDPILL_LKM_MAKE_TARGET="$(echo $platform_selected | jq -r -e '.redpill_lkm_make_target')"
     tcrppart="$(mount | grep -i optional | grep cde | awk -F / '{print $3}' | uniq | cut -c 1-3)3"
-    local_cache="/mnt/${tcrppart}/auxfiles"
+    local_cache="/${workdir}/auxfiles"
 
     if [ ! -n "$(which bspatch)" ]; then
 
