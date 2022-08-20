@@ -7,7 +7,7 @@
 #
 # User Variables :
 
-homedir="$GITHUB_WORKSPACE/homedir"
+homedir="/home/runner/work/tinycore-redpill/tinycore-redpill/homedir"
 rploaderver="0.9.1.2"
 build="develop"
 rploaderfile="https://raw.githubusercontent.com/pocopico/tinycore-redpill/$build/rploader.sh"
